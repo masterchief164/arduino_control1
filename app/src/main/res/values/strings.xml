@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">arduino_control</string>
+    <string name="button">Button</string>
+    <string name="switch1">Switch</string>
+    <string name="led">LED</string>
+    <string name="fan">Fan</string>
+    <string name="size_is">Size is</string>
 </resources>
