@@ -8,4 +8,7 @@
     <string name="swioff">Turn Off</string>
     <string name="swion">Turn On</string>
     <string name="ardms">\"Arduino Message : \"</string>
+    <string name="visual_led">Visual LED</string>
+    <string name="toggle">Toggle</string>
+    <string name="connect">Connect</string>
 </resources>

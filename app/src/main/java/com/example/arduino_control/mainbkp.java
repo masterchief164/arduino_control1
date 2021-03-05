@@ -39,7 +39,7 @@ public class mainbkp extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.mainlayoutbkp);
         Button bluetooth_connect = findViewById(R.id.bluetooth_connect);
         Toolbar toolbar = findViewById(R.id.toolbar);
         ProgressBar progressBar = findViewById(R.id.progressBar);

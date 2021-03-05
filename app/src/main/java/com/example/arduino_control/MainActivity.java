@@ -1,9 +1,12 @@
 package com.example.arduino_control;
 
+import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -15,15 +18,20 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.UUID;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import static android.content.ContentValues.TAG;
 
@@ -36,6 +44,8 @@ public class MainActivity extends AppCompatActivity {
     public static ConnectedThread connectedThread;
     public static CreateConnectThread createConnectThread;
     private String deviceName = null;
+
+    static final int req = 123;
 
     @RequiresApi(api = Build.VERSION_CODES.Q)
     @Override
@@ -54,6 +64,61 @@ public class MainActivity extends AppCompatActivity {
         final ImageView imageView = findViewById(R.id.imageView);
         imageView.setBackgroundColor(getResources().getColor(R.color.colorOff));
 
+
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_BACKGROUND_LOCATION) +
+                ContextCompat.checkSelfPermission(this,
+                        Manifest.permission.ACCESS_FINE_LOCATION) +
+                ContextCompat.checkSelfPermission(this,
+                        Manifest.permission.ACCESS_COARSE_LOCATION) +
+                ContextCompat.checkSelfPermission(this,
+                        Manifest.permission.BLUETOOTH) +
+                ContextCompat.checkSelfPermission(this,
+                        Manifest.permission.BLUETOOTH_ADMIN) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    Manifest.permission.BLUETOOTH_ADMIN) ||
+                    ActivityCompat.shouldShowRequestPermissionRationale(this,
+                            Manifest.permission.BLUETOOTH) ||
+                    ActivityCompat.shouldShowRequestPermissionRationale(this,
+                            Manifest.permission.ACCESS_COARSE_LOCATION) ||
+                    ActivityCompat.shouldShowRequestPermissionRationale(this,
+                            Manifest.permission.ACCESS_FINE_LOCATION) ||
+                    ActivityCompat.shouldShowRequestPermissionRationale(this,
+                            Manifest.permission.ACCESS_BACKGROUND_LOCATION)) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle("Grant Permissions");
+                builder.setMessage("Grant Bluetooth and Location Access");
+                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        ActivityCompat.requestPermissions(
+                                MainActivity.this,
+                                new String[]{
+                                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                                        Manifest.permission.ACCESS_FINE_LOCATION,
+                                        Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+                                        Manifest.permission.BLUETOOTH_ADMIN,
+                                        Manifest.permission.BLUETOOTH
+                                }, req
+                        );
+                    }
+                });
+                builder.setNegativeButton("Cancel", null);
+                AlertDialog alertDialog = builder.create();
+                alertDialog.show();
+            } else {
+                ActivityCompat.requestPermissions(
+                        MainActivity.this,
+                        new String[]{
+                                Manifest.permission.ACCESS_COARSE_LOCATION,
+                                Manifest.permission.ACCESS_FINE_LOCATION,
+                                Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+                                Manifest.permission.BLUETOOTH_ADMIN,
+                                Manifest.permission.BLUETOOTH
+                        }, req
+                );
+            }
+        }
 
         // If a bluetooth device has been selected from SelectDeviceActivity
         deviceName = getIntent().getStringExtra("deviceName");
@@ -163,6 +228,22 @@ public class MainActivity extends AppCompatActivity {
         startActivity(a);
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == req) {
+            if ((grantResults.length > 0) &&
+                    (grantResults[0] +
+                            grantResults[1] +
+                            grantResults[2] +
+                            grantResults[3] +
+                            grantResults[4]
+                            == PackageManager.PERMISSION_GRANTED)) {
+                Toast.makeText(getApplicationContext(),
+                        "permissions are granted", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
     /* ============================ Thread to Create Bluetooth Connection =================================== */
     public static class CreateConnectThread extends Thread {
 
@@ -214,7 +295,11 @@ public class MainActivity extends AppCompatActivity {
 
             // The connection attempt succeeded. Perform work associated with
             // the connection in a separate thread.
-            connectedThread = new ConnectedThread(mmSocket);
+            try {
+                connectedThread = new ConnectedThread(mmSocket);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             connectedThread.run();
         }
 
@@ -230,22 +315,17 @@ public class MainActivity extends AppCompatActivity {
 
     /* =============================== Thread for Data Transfer =========================================== */
     public static class ConnectedThread extends Thread {
-        private final BluetoothSocket mmSocket;
         private final InputStream mmInStream;
         private final OutputStream mmOutStream;
 
-        public ConnectedThread(BluetoothSocket socket) {
-            mmSocket = socket;
-            InputStream tmpIn = null;
-            OutputStream tmpOut = null;
+        public ConnectedThread(BluetoothSocket socket) throws IOException {
+            InputStream tmpIn;
+            OutputStream tmpOut;
 
             // Get the input and output streams, using temp objects because
             // member streams are final
-            try {
-                tmpIn = socket.getInputStream();
-                tmpOut = socket.getOutputStream();
-            } catch (IOException e) {
-            }
+            tmpIn = socket.getInputStream();
+            tmpOut = socket.getOutputStream();
 
             mmInStream = tmpIn;
             mmOutStream = tmpOut;
@@ -289,11 +369,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
         /* Call this from the main activity to shutdown the connection */
-        public void cancel() {
-            try {
-                mmSocket.close();
-            } catch (IOException e) {
-            }
-        }
+
     }
 }
