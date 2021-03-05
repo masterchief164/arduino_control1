@@ -4,7 +4,6 @@ import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -92,21 +91,16 @@ public class MainActivity extends AppCompatActivity {
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.setTitle("Grant Permissions");
                 builder.setMessage("Grant Bluetooth and Location Access");
-                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        ActivityCompat.requestPermissions(
-                                MainActivity.this,
-                                new String[]{
-                                        Manifest.permission.ACCESS_COARSE_LOCATION,
-                                        Manifest.permission.ACCESS_FINE_LOCATION,
-                                        Manifest.permission.ACCESS_BACKGROUND_LOCATION,
-                                        Manifest.permission.BLUETOOTH_ADMIN,
-                                        Manifest.permission.BLUETOOTH
-                                }, req
-                        );
-                    }
-                });
+                builder.setPositiveButton("OK", (dialog, which) -> ActivityCompat.requestPermissions(
+                        MainActivity.this,
+                        new String[]{
+                                Manifest.permission.ACCESS_COARSE_LOCATION,
+                                Manifest.permission.ACCESS_FINE_LOCATION,
+                                Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+                                Manifest.permission.BLUETOOTH_ADMIN,
+                                Manifest.permission.BLUETOOTH
+                        }, req
+                ));
                 builder.setNegativeButton("Cancel", null);
                 AlertDialog alertDialog = builder.create();
                 alertDialog.show();
@@ -193,13 +187,10 @@ public class MainActivity extends AppCompatActivity {
         };
 
         // Select Bluetooth Device
-        buttonConnect.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                // Move to adapter list
-                Intent intent = new Intent(MainActivity.this, SelectDeviceActivity.class);
-                startActivity(intent);
-            }
+        buttonConnect.setOnClickListener(view -> {
+            // Move to adapter list
+            Intent intent = new Intent(MainActivity.this, SelectDeviceActivity.class);
+            startActivity(intent);
         });
 
 
@@ -257,7 +248,7 @@ public class MainActivity extends AppCompatActivity {
                 connectedThread.write(cmdTxt);
             }
         });
-        led_seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+        fan_seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 
