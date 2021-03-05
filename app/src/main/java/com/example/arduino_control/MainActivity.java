@@ -44,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
     public static ConnectedThread connectedThread;
     public static CreateConnectThread createConnectThread;
     private String deviceName = null;
+    public BluetoothAdapter bluetoothAdapter = null;
 
     static final int req = 123;
 
@@ -125,7 +126,7 @@ public class MainActivity extends AppCompatActivity {
         if (deviceName != null) {
             // Get the device address to make BT Connection
             String deviceAddress = getIntent().getStringExtra("deviceAddress");
-            // Show progree and connection status
+            // Show progress and connection status
             toolbar.setSubtitle("Connecting to " + deviceName + "...");
             progressBar.setVisibility(View.VISIBLE);
             buttonConnect.setEnabled(false);
@@ -135,9 +136,10 @@ public class MainActivity extends AppCompatActivity {
             the code will call a new thread to create a bluetooth connection to the
             selected device (see the thread code below)
              */
-            BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+            bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+            checkBTState();
             createConnectThread = new CreateConnectThread(bluetoothAdapter, deviceAddress);
-            createConnectThread.run();
+            createConnectThread.start();
         }
 
         /*
@@ -244,8 +246,21 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void checkBTState() {
+        // Check for Bluetooth support and then check to make sure it is turned on
+        // Emulator doesn't support Bluetooth and will return null
+        if (bluetoothAdapter.isEnabled()) {
+            Log.d(TAG, "...Bluetooth ON...");
+        } else {
+            //Prompt user to turn on Bluetooth
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableBtIntent, 1);
+        }
+    }
+
     /* ============================ Thread to Create Bluetooth Connection =================================== */
     public static class CreateConnectThread extends Thread {
+
 
         public CreateConnectThread(BluetoothAdapter bluetoothAdapter, String address) {
             /*
@@ -263,7 +278,7 @@ public class MainActivity extends AppCompatActivity {
                 You should try using other methods i.e. :
                 tmp = device.createRfcommSocketToServiceRecord(MY_UUID);
                  */
-                tmp = bluetoothDevice.createRfcommSocketToServiceRecord(uuid);
+                tmp = bluetoothDevice.createInsecureRfcommSocketToServiceRecord(uuid);
 
 
             } catch (IOException e) {
@@ -279,14 +294,16 @@ public class MainActivity extends AppCompatActivity {
             try {
                 // Connect to the remote device through the socket. This call blocks
                 // until it succeeds or throws an exception.
+
+                Log.d("Status", "Trying to connect");
                 mmSocket.connect();
-                Log.e("Status", "Device connected");
-                handler.obtainMessage(CONNECTING_STATUS, 1, -1).sendToTarget();
+                Log.d("Status", "Device connected");
+                handler.obtainMessage(CONNECTING_STATUS, -1, 1).sendToTarget();
             } catch (IOException connectException) {
                 // Unable to connect; close the socket and return.
                 try {
                     mmSocket.close();
-                    Log.e("Status", "Cannot connect to device");
+                    Log.d("Status", "Cannot connect to device");
                     handler.obtainMessage(CONNECTING_STATUS, -1, -1).sendToTarget();
                 } catch (IOException closeException) {
                     Log.e(TAG, "Could not close the client socket", closeException);
