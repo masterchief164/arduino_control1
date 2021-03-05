@@ -15,10 +15,12 @@ import android.os.Message;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -55,15 +57,16 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         // UI Initialization
-        final Button buttonConnect = findViewById(R.id.buttonConnect);
+        final Button buttonConnect = findViewById(R.id.bluetoothConnect);
         final Toolbar toolbar = findViewById(R.id.toolbar);
         final ProgressBar progressBar = findViewById(R.id.progressBar);
         progressBar.setVisibility(View.GONE);
-        final TextView textViewInfo = findViewById(R.id.textViewInfo);
-        final Button buttonToggle = findViewById(R.id.buttonToggle);
-        buttonToggle.setEnabled(false);
-        final ImageView imageView = findViewById(R.id.imageView);
-        imageView.setBackgroundColor(getResources().getColor(R.color.colorOff));
+        SwitchMaterial led_switch = findViewById(R.id.switch_led);
+        SwitchMaterial fan_switch = findViewById(R.id.switch_fan);
+        SeekBar led_seekbar = findViewById(R.id.seekBar_led);
+        SeekBar fan_seekbar = findViewById(R.id.seekBar_fan);
+        TextView fan_textview = findViewById(R.id.textView_fan);
+        TextView led_textview = findViewById(R.id.textView_led);
 
 
         if (ContextCompat.checkSelfPermission(this,
@@ -155,7 +158,6 @@ public class MainActivity extends AppCompatActivity {
                                 toolbar.setSubtitle("Connected to " + deviceName);
                                 progressBar.setVisibility(View.GONE);
                                 buttonConnect.setEnabled(true);
-                                buttonToggle.setEnabled(true);
                                 break;
                             case -1:
                                 toolbar.setSubtitle("Device fails to connect");
@@ -168,13 +170,21 @@ public class MainActivity extends AppCompatActivity {
                     case MESSAGE_READ:
                         String arduinoMsg = msg.obj.toString(); // Read message from Arduino
                         switch (arduinoMsg.toLowerCase()) {
-                            case "led is turned on":
-                                imageView.setBackgroundColor(getResources().getColor(R.color.colorOn));
-                                textViewInfo.setText(getString(R.string.ardms) + arduinoMsg);
+                            case "led on":
+                                led_textview.setText(arduinoMsg.toUpperCase());
+                                led_switch.setChecked(true);
                                 break;
-                            case "led is turned off":
-                                imageView.setBackgroundColor(getResources().getColor(R.color.colorOff));
-                                textViewInfo.setText(getString(R.string.ardms) + arduinoMsg);
+                            case "led off":
+                                led_textview.setText(arduinoMsg.toUpperCase());
+                                led_switch.setChecked(false);
+                                break;
+                            case "fan on":
+                                fan_switch.setChecked(true);
+                                fan_textview.setText(arduinoMsg.toUpperCase());
+                                break;
+                            case "fan off":
+                                fan_switch.setChecked(false);
+                                fan_textview.setText(arduinoMsg.toUpperCase());
                                 break;
                         }
                         break;
@@ -192,27 +202,85 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Button to ON/OFF LED on Arduino Board
-        buttonToggle.setOnClickListener(new View.OnClickListener() {
+
+        led_switch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            String cmdTxt;
+            boolean state = led_switch.isChecked();
+            if (state) {
+                led_switch.setChecked(false);
+                led_textview.setText(R.string.swioff);
+                cmdTxt = "led off";
+            } else {
+                led_switch.setChecked(true);
+                led_textview.setText(R.string.swion);
+                cmdTxt = "led on";
+            }
+            connectedThread.write(cmdTxt);
+        });
+        fan_switch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            String cmdTxt;
+            boolean state = fan_switch.isChecked();
+            if (state) {
+                fan_switch.setChecked(false);
+                fan_textview.setText(R.string.swioff);
+                cmdTxt = "led off";
+            } else {
+                fan_switch.setChecked(true);
+                fan_textview.setText(R.string.swion);
+                cmdTxt = "led on";
+            }
+            connectedThread.write(cmdTxt);
+        });
+        led_seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
-            public void onClick(View view) {
-                String cmdText = null;
-                String btnState = buttonToggle.getText().toString().toLowerCase();
-                switch (btnState) {
-                    case "turn on":
-                        buttonToggle.setText(R.string.swioff);
-                        // Command to turn on LED on Arduino. Must match with the command in Arduino code
-                        cmdText = "<turn on>";
-                        break;
-                    case "turn off":
-                        buttonToggle.setText(R.string.swion);
-                        // Command to turn off LED on Arduino. Must match with the command in Arduino code
-                        cmdText = "<turn off>";
-                        break;
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                String cmdTxt;
+                if (seekBar.getProgress() == 0) {
+                    led_switch.setChecked(false);
+                    led_textview.setText(R.string.swioff);
+                    cmdTxt = "led off";
+                } else {
+                    led_switch.setChecked(true);
+                    led_textview.setText(R.string.swion);
+                    cmdTxt = "led intensity" + seekBar.getProgress();
                 }
-                // Send command to Arduino board
-                assert cmdText != null;
-                connectedThread.write(cmdText);
+                connectedThread.write(cmdTxt);
+            }
+        });
+        led_seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                String cmdTxt;
+                if (seekBar.getProgress() == 0) {
+                    fan_switch.setChecked(false);
+                    fan_textview.setText(R.string.swioff);
+                    cmdTxt = "fan off";
+                } else {
+                    fan_switch.setChecked(true);
+                    fan_textview.setText(R.string.swion);
+                    cmdTxt = "fan intensity" + seekBar.getProgress();
+                }
+                connectedThread.write(cmdTxt);
             }
         });
     }
