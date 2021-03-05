@@ -137,7 +137,7 @@ public class MainActivity extends AppCompatActivity {
              */
             BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
             createConnectThread = new CreateConnectThread(bluetoothAdapter, deviceAddress);
-            createConnectThread.start();
+            createConnectThread.run();
         }
 
         /*
