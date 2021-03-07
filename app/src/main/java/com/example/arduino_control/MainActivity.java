@@ -166,18 +166,18 @@ public class MainActivity extends AppCompatActivity {
                         switch (arduinoMsg.toLowerCase()) {
                             case "led on":
                                 led_textview.setText(arduinoMsg.toUpperCase());
-                                led_switch.setChecked(true);
+                                led_switch.setChecked(false);
                                 break;
                             case "led off":
                                 led_textview.setText(arduinoMsg.toUpperCase());
-                                led_switch.setChecked(false);
+                                led_switch.setChecked(true);
                                 break;
                             case "fan on":
-                                fan_switch.setChecked(true);
+                                fan_switch.setChecked(false);
                                 fan_textview.setText(arduinoMsg.toUpperCase());
                                 break;
                             case "fan off":
-                                fan_switch.setChecked(false);
+                                fan_switch.setChecked(true);
                                 fan_textview.setText(arduinoMsg.toUpperCase());
                                 break;
                         }
@@ -198,11 +198,11 @@ public class MainActivity extends AppCompatActivity {
             String cmdTxt;
             boolean state = led_switch.isChecked();
             if (state) {
-                led_switch.setChecked(false);
+                led_switch.setChecked(true);
                 led_textview.setText(R.string.swioff);
                 cmdTxt = "led off";
             } else {
-                led_switch.setChecked(true);
+                led_switch.setChecked(false);
                 led_textview.setText(R.string.swion);
                 cmdTxt = "led on";
             }
@@ -212,13 +212,13 @@ public class MainActivity extends AppCompatActivity {
             String cmdTxt;
             boolean state = fan_switch.isChecked();
             if (state) {
-                fan_switch.setChecked(false);
-                fan_textview.setText(R.string.swioff);
-                cmdTxt = "led off";
-            } else {
                 fan_switch.setChecked(true);
+                fan_textview.setText(R.string.swioff);
+                cmdTxt = "fan off";
+            } else {
+                fan_switch.setChecked(false);
                 fan_textview.setText(R.string.swion);
-                cmdTxt = "led on";
+                cmdTxt = "fan on";
             }
             connectedThread.write(cmdTxt);
         });
@@ -357,7 +357,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("Status", "Trying to connect");
                 mmSocket.connect();
                 Log.d("Status", "Device connected");
-                handler.obtainMessage(CONNECTING_STATUS, -1, 1).sendToTarget();
+                handler.obtainMessage(CONNECTING_STATUS, 1, -1).sendToTarget();
             } catch (IOException connectException) {
                 // Unable to connect; close the socket and return.
                 try {

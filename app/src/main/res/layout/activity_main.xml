@@ -10,7 +10,7 @@
         android:id="@+id/bluetoothConnect"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Button"
+        android:text="@string/connect"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="1.0"
@@ -31,8 +31,9 @@
 
     <SeekBar
         android:id="@+id/seekBar_fan"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        app:layout_constraintWidth_percent="0.8"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -40,7 +41,8 @@
 
     <SeekBar
         android:id="@+id/seekBar_led"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
+        app:layout_constraintWidth_percent="0.8"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -84,7 +86,7 @@
         android:id="@+id/switch_led"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/switch1"
+        android:text="@string/led"
         app:layout_constraintBottom_toTopOf="@+id/seekBar_led"
         app:layout_constraintEnd_toStartOf="@+id/textView_led"
         app:layout_constraintStart_toStartOf="parent"
@@ -94,7 +96,7 @@
         android:id="@+id/switch_fan"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/switch1"
+        android:text="@string/fan"
         app:layout_constraintBottom_toTopOf="@+id/seekBar_fan"
         app:layout_constraintEnd_toStartOf="@+id/textView_fan"
         app:layout_constraintStart_toStartOf="parent"
