@@ -11,4 +11,6 @@
     <string name="visual_led">Visual LED</string>
     <string name="toggle">Toggle</string>
     <string name="connect">Connect</string>
+    <string name="voice_mode">Speech Mode</string>
+    <string name="initiate_voice_mode">Initiate Voice Mode</string>
 </resources>

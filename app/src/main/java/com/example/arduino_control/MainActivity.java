@@ -4,6 +4,7 @@ import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -11,6 +12,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.speech.RecognizerIntent;
+import android.speech.SpeechRecognizer;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -19,11 +22,13 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Locale;
 import java.util.UUID;
 
 import androidx.annotation.NonNull;
@@ -46,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
     public static CreateConnectThread createConnectThread;
     private String deviceName = null;
     public BluetoothAdapter bluetoothAdapter = null;
+    private SpeechRecognizer speechRecognizer;
 
     static final int req = 123;
 
@@ -55,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // UI Initialization
+        //                              UI Initialization
         final Button buttonConnect = findViewById(R.id.bluetoothConnect);
         final Toolbar toolbar = findViewById(R.id.toolbar);
         final ProgressBar progressBar = findViewById(R.id.progressBar);
@@ -66,12 +72,15 @@ public class MainActivity extends AppCompatActivity {
         SeekBar fan_seekbar = findViewById(R.id.seekBar_fan);
         TextView fan_textview = findViewById(R.id.textView_fan);
         TextView led_textview = findViewById(R.id.textView_led);
+        FloatingActionButton floatingActionButton = findViewById(R.id.voice_activation);
+        TextView voiceResults = findViewById(R.id.voiceResults);
         fan_seekbar.setEnabled(false);
         fan_switch.setEnabled(false);
         led_switch.setEnabled(false);
         led_seekbar.setEnabled(false);
+        floatingActionButton.setEnabled(false);
 
-
+        //                          Checking Permissions
         if (ContextCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_BACKGROUND_LOCATION) +
                 ContextCompat.checkSelfPermission(this,
@@ -81,7 +90,11 @@ public class MainActivity extends AppCompatActivity {
                 ContextCompat.checkSelfPermission(this,
                         Manifest.permission.BLUETOOTH) +
                 ContextCompat.checkSelfPermission(this,
-                        Manifest.permission.BLUETOOTH_ADMIN) !=
+                        Manifest.permission.BLUETOOTH_ADMIN) +
+                ContextCompat.checkSelfPermission(this,
+                        Manifest.permission.INTERNET) +
+                ContextCompat.checkSelfPermission(this,
+                        Manifest.permission.RECORD_AUDIO) !=
                 PackageManager.PERMISSION_GRANTED) {
             if (ActivityCompat.shouldShowRequestPermissionRationale(this,
                     Manifest.permission.BLUETOOTH_ADMIN) ||
@@ -92,7 +105,11 @@ public class MainActivity extends AppCompatActivity {
                     ActivityCompat.shouldShowRequestPermissionRationale(this,
                             Manifest.permission.ACCESS_FINE_LOCATION) ||
                     ActivityCompat.shouldShowRequestPermissionRationale(this,
-                            Manifest.permission.ACCESS_BACKGROUND_LOCATION)) {
+                            Manifest.permission.ACCESS_BACKGROUND_LOCATION) ||
+                    ActivityCompat.shouldShowRequestPermissionRationale(this,
+                            Manifest.permission.RECORD_AUDIO) ||
+                    ActivityCompat.shouldShowRequestPermissionRationale(this
+                            , Manifest.permission.INTERNET)) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.setTitle("Grant Permissions");
                 builder.setMessage("Grant Bluetooth and Location Access");
@@ -104,7 +121,9 @@ public class MainActivity extends AppCompatActivity {
                                         Manifest.permission.ACCESS_FINE_LOCATION,
                                         Manifest.permission.ACCESS_BACKGROUND_LOCATION,
                                         Manifest.permission.BLUETOOTH_ADMIN,
-                                        Manifest.permission.BLUETOOTH
+                                        Manifest.permission.BLUETOOTH,
+                                        Manifest.permission.RECORD_AUDIO,
+                                        Manifest.permission.INTERNET
                                 }, req
                         ));
                 builder.setNegativeButton("Cancel", null);
@@ -118,7 +137,10 @@ public class MainActivity extends AppCompatActivity {
                                 Manifest.permission.ACCESS_FINE_LOCATION,
                                 Manifest.permission.ACCESS_BACKGROUND_LOCATION,
                                 Manifest.permission.BLUETOOTH_ADMIN,
-                                Manifest.permission.BLUETOOTH
+                                Manifest.permission.BLUETOOTH,
+                                Manifest.permission.BLUETOOTH,
+                                Manifest.permission.RECORD_AUDIO,
+                                Manifest.permission.INTERNET
                         }, req
                 );
             }
@@ -144,6 +166,27 @@ public class MainActivity extends AppCompatActivity {
             createConnectThread.start();
         }
 
+
+        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this, ComponentName.unflattenFromString("com.google.android.googlequicksearchbox/com.google.android.voicesearch.serviceapi.GoogleRecognitionService"));
+
+
+        final Intent speechRecognizerIntent = new Intent(
+                RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+
+        speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+
+        speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE,
+                Locale.getDefault());
+
+
+        //                          voice button
+
+
+        floatingActionButton.setOnClickListener(v ->
+                speechRecognizer.startListening(speechRecognizerIntent));
+
+
         /*
         Second most important piece of Code. GUI Handler
          */
@@ -159,6 +202,7 @@ public class MainActivity extends AppCompatActivity {
                                 buttonConnect.setEnabled(true);
                                 fan_switch.setEnabled(true);
                                 led_switch.setEnabled(true);
+                                floatingActionButton.setEnabled(true);
                                 break;
                             case -1:
                                 toolbar.setSubtitle("Device fails to connect");
@@ -214,14 +258,12 @@ public class MainActivity extends AppCompatActivity {
         // Select Bluetooth Device
         buttonConnect.setOnClickListener(view -> {
             // Move to adapter list
-
             bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
             checkBTState();
-
-
         });
 
 
+        //                              Led Switch
         led_switch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             String cmdTxt;
             boolean state = led_switch.isChecked();
@@ -241,6 +283,8 @@ public class MainActivity extends AppCompatActivity {
             }
             connectedThread.write(cmdTxt);
         });
+
+        //                              Fan Switch
         fan_switch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             String cmdTxt;
             boolean state = fan_switch.isChecked();
@@ -260,6 +304,8 @@ public class MainActivity extends AppCompatActivity {
             }
             connectedThread.write(cmdTxt);
         });
+
+        //                              Fan Seekbar
         led_seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -285,6 +331,8 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
+        //                              Led Seekbar
         fan_seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -335,7 +383,9 @@ public class MainActivity extends AppCompatActivity {
                             grantResults[1] +
                             grantResults[2] +
                             grantResults[3] +
-                            grantResults[4]
+                            grantResults[4] +
+                            grantResults[5] +
+                            grantResults[6]
                             == PackageManager.PERMISSION_GRANTED)) {
                 Toast.makeText(getApplicationContext(),
                         "permissions are granted", Toast.LENGTH_SHORT).show();
@@ -345,7 +395,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void checkBTState() {
         // Check for Bluetooth support and then check to make sure it is turned on
-        // Emulator doesn't support Bluetooth and will return null
+        //          Emulator doesn't support Bluetooth and will return null
         if (bluetoothAdapter.isEnabled()) {
             Log.d(TAG, "...Bluetooth ON...");
             Intent intent = new Intent(MainActivity.this,
