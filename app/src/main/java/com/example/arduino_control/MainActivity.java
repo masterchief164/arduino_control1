@@ -169,26 +169,40 @@ public class MainActivity extends AppCompatActivity {
 
                     case MESSAGE_READ:
                         String arduinoMsg = msg.obj.toString(); // Read message from Arduino
-                        switch (arduinoMsg.toLowerCase()) {
-                            case "led on":
-                                led_textview.setText(arduinoMsg.toUpperCase());
+                        switch (arduinoMsg.charAt(0)) {
+                            case '1':
+                                led_textview.setText(R.string.swion);
                                 led_switch.setChecked(true);
                                 led_seekbar.setProgress(1);
                                 break;
-                            case "led off":
-                                led_textview.setText(arduinoMsg.toUpperCase());
+                            case '2':
+                                led_textview.setText(R.string.swioff);
                                 led_switch.setChecked(false);
                                 led_seekbar.setProgress(0);
                                 break;
-                            case "fan on":
+                            case '3':
                                 fan_switch.setChecked(true);
-                                fan_textview.setText(arduinoMsg.toUpperCase());
+                                fan_textview.setText(R.string.swion);
                                 fan_seekbar.setProgress(1);
                                 break;
-                            case "fan off":
+                            case '4':
                                 fan_switch.setChecked(false);
-                                fan_textview.setText(arduinoMsg.toUpperCase());
+                                fan_textview.setText(R.string.swioff);
                                 fan_seekbar.setProgress(0);
+                                break;
+                            case '5':
+                                int k = Integer.parseInt(arduinoMsg.substring(2));
+                                led_switch.setChecked(true);
+                                led_seekbar.setEnabled(true);
+                                led_seekbar.setProgress(k);
+                                Log.e(TAG, String.valueOf(k));
+                                break;
+                            case '6':
+                                k = Integer.parseInt(arduinoMsg.substring(2));
+                                fan_switch.setChecked(true);
+                                fan_seekbar.setEnabled(true);
+                                fan_seekbar.setProgress(k);
+                                Log.e(TAG, String.valueOf(k));
                                 break;
                         }
                         break;
@@ -259,7 +273,6 @@ public class MainActivity extends AppCompatActivity {
                 if (seekBar.getProgress() == 0) {
                     led_switch.setChecked(false);
                     led_textview.setText(R.string.swioff);
-                    cmdTxt = "led off";
                 } else {
                     led_switch.setChecked(true);
                     led_textview.setText(R.string.swion);
@@ -285,7 +298,6 @@ public class MainActivity extends AppCompatActivity {
                 if (seekBar.getProgress() == 0) {
                     fan_switch.setChecked(false);
                     fan_textview.setText(R.string.swioff);
-                    cmdTxt = "fan off";
                 } else {
                     fan_switch.setChecked(true);
                     fan_textview.setText(R.string.swion);
