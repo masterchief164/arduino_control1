@@ -5,8 +5,8 @@
     <string name="led">LED</string>
     <string name="fan">Fan</string>
     <string name="size_is">Size is</string>
-    <string name="swioff">Turn Off</string>
-    <string name="swion">Turn On</string>
+    <string name="swioff">Off</string>
+    <string name="swion">On</string>
     <string name="ardms">\"Arduino Message : \"</string>
     <string name="visual_led">Visual LED</string>
     <string name="toggle">Toggle</string>

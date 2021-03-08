@@ -66,6 +66,10 @@ public class MainActivity extends AppCompatActivity {
         SeekBar fan_seekbar = findViewById(R.id.seekBar_fan);
         TextView fan_textview = findViewById(R.id.textView_fan);
         TextView led_textview = findViewById(R.id.textView_led);
+        fan_seekbar.setEnabled(false);
+        fan_switch.setEnabled(false);
+        led_switch.setEnabled(false);
+        led_seekbar.setEnabled(false);
 
 
         if (ContextCompat.checkSelfPermission(this,
@@ -152,6 +156,8 @@ public class MainActivity extends AppCompatActivity {
                                 toolbar.setSubtitle("Connected to " + deviceName);
                                 progressBar.setVisibility(View.GONE);
                                 buttonConnect.setEnabled(true);
+                                fan_switch.setEnabled(true);
+                                led_switch.setEnabled(true);
                                 break;
                             case -1:
                                 toolbar.setSubtitle("Device fails to connect");
@@ -166,19 +172,23 @@ public class MainActivity extends AppCompatActivity {
                         switch (arduinoMsg.toLowerCase()) {
                             case "led on":
                                 led_textview.setText(arduinoMsg.toUpperCase());
-                                led_switch.setChecked(false);
+                                led_switch.setChecked(true);
+                                led_seekbar.setProgress(1);
                                 break;
                             case "led off":
                                 led_textview.setText(arduinoMsg.toUpperCase());
-                                led_switch.setChecked(true);
+                                led_switch.setChecked(false);
+                                led_seekbar.setProgress(0);
                                 break;
                             case "fan on":
-                                fan_switch.setChecked(false);
-                                fan_textview.setText(arduinoMsg.toUpperCase());
-                                break;
-                            case "fan off":
                                 fan_switch.setChecked(true);
                                 fan_textview.setText(arduinoMsg.toUpperCase());
+                                fan_seekbar.setProgress(1);
+                                break;
+                            case "fan off":
+                                fan_switch.setChecked(false);
+                                fan_textview.setText(arduinoMsg.toUpperCase());
+                                fan_seekbar.setProgress(0);
                                 break;
                         }
                         break;
@@ -199,11 +209,16 @@ public class MainActivity extends AppCompatActivity {
             boolean state = led_switch.isChecked();
             if (state) {
                 led_switch.setChecked(true);
-                led_textview.setText(R.string.swioff);
+                led_textview.setText(R.string.swion);
+                led_seekbar.setProgress(1);
+                led_seekbar.setEnabled(true);
                 cmdTxt = "led on";
             } else {
                 led_switch.setChecked(false);
-                led_textview.setText(R.string.swion);
+                led_textview.setText(R.string.swioff);
+                led_seekbar.setProgress(0);
+                led_seekbar.setEnabled(false);
+
                 cmdTxt = "led off";
             }
             connectedThread.write(cmdTxt);
@@ -213,12 +228,16 @@ public class MainActivity extends AppCompatActivity {
             boolean state = fan_switch.isChecked();
             if (state) {
                 fan_switch.setChecked(true);
-                fan_textview.setText(R.string.swioff);
+                fan_textview.setText(R.string.swion);
+                fan_seekbar.setProgress(1);
+                fan_seekbar.setEnabled(true);
                 cmdTxt = "fan on";
 
             } else {
                 fan_switch.setChecked(false);
-                fan_textview.setText(R.string.swion);
+                fan_textview.setText(R.string.swioff);
+                fan_seekbar.setProgress(0);
+                fan_seekbar.setEnabled(false);
                 cmdTxt = "fan off";
             }
             connectedThread.write(cmdTxt);
