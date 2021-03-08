@@ -38,8 +38,8 @@ import static android.content.ContentValues.TAG;
 
 public class MainActivity extends AppCompatActivity {
 
-    private final static int CONNECTING_STATUS = 1; // used in bluetooth handler to identify message status
-    private final static int MESSAGE_READ = 2; // used in bluetooth handler to identify message update
+    private final static int CONNECTING_STATUS = 1;
+    private final static int MESSAGE_READ = 2;
     public static Handler handler;
     public static BluetoothSocket mmSocket;
     public static ConnectedThread connectedThread;
@@ -81,7 +81,8 @@ public class MainActivity extends AppCompatActivity {
                 ContextCompat.checkSelfPermission(this,
                         Manifest.permission.BLUETOOTH) +
                 ContextCompat.checkSelfPermission(this,
-                        Manifest.permission.BLUETOOTH_ADMIN) != PackageManager.PERMISSION_GRANTED) {
+                        Manifest.permission.BLUETOOTH_ADMIN) !=
+                PackageManager.PERMISSION_GRANTED) {
             if (ActivityCompat.shouldShowRequestPermissionRationale(this,
                     Manifest.permission.BLUETOOTH_ADMIN) ||
                     ActivityCompat.shouldShowRequestPermissionRationale(this,
@@ -95,16 +96,17 @@ public class MainActivity extends AppCompatActivity {
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.setTitle("Grant Permissions");
                 builder.setMessage("Grant Bluetooth and Location Access");
-                builder.setPositiveButton("OK", (dialog, which) -> ActivityCompat.requestPermissions(
-                        MainActivity.this,
-                        new String[]{
-                                Manifest.permission.ACCESS_COARSE_LOCATION,
-                                Manifest.permission.ACCESS_FINE_LOCATION,
-                                Manifest.permission.ACCESS_BACKGROUND_LOCATION,
-                                Manifest.permission.BLUETOOTH_ADMIN,
-                                Manifest.permission.BLUETOOTH
-                        }, req
-                ));
+                builder.setPositiveButton("OK", (dialog, which) ->
+                        ActivityCompat.requestPermissions(
+                                MainActivity.this,
+                                new String[]{
+                                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                                        Manifest.permission.ACCESS_FINE_LOCATION,
+                                        Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+                                        Manifest.permission.BLUETOOTH_ADMIN,
+                                        Manifest.permission.BLUETOOTH
+                                }, req
+                        ));
                 builder.setNegativeButton("Cancel", null);
                 AlertDialog alertDialog = builder.create();
                 alertDialog.show();
@@ -138,7 +140,6 @@ public class MainActivity extends AppCompatActivity {
             selected device (see the thread code below)
              */
             bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-            checkBTState();
             createConnectThread = new CreateConnectThread(bluetoothAdapter, deviceAddress);
             createConnectThread.start();
         }
@@ -213,8 +214,11 @@ public class MainActivity extends AppCompatActivity {
         // Select Bluetooth Device
         buttonConnect.setOnClickListener(view -> {
             // Move to adapter list
-            Intent intent = new Intent(MainActivity.this, SelectDeviceActivity.class);
-            startActivity(intent);
+
+            bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+            checkBTState();
+
+
         });
 
 
@@ -226,14 +230,14 @@ public class MainActivity extends AppCompatActivity {
                 led_textview.setText(R.string.swion);
                 led_seekbar.setProgress(1);
                 led_seekbar.setEnabled(true);
-                cmdTxt = "led on";
+                cmdTxt = "1";
             } else {
                 led_switch.setChecked(false);
                 led_textview.setText(R.string.swioff);
                 led_seekbar.setProgress(0);
                 led_seekbar.setEnabled(false);
 
-                cmdTxt = "led off";
+                cmdTxt = "2";
             }
             connectedThread.write(cmdTxt);
         });
@@ -245,14 +249,14 @@ public class MainActivity extends AppCompatActivity {
                 fan_textview.setText(R.string.swion);
                 fan_seekbar.setProgress(1);
                 fan_seekbar.setEnabled(true);
-                cmdTxt = "fan on";
+                cmdTxt = "3";
 
             } else {
                 fan_switch.setChecked(false);
                 fan_textview.setText(R.string.swioff);
                 fan_seekbar.setProgress(0);
                 fan_seekbar.setEnabled(false);
-                cmdTxt = "fan off";
+                cmdTxt = "4";
             }
             connectedThread.write(cmdTxt);
         });
@@ -276,7 +280,7 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     led_switch.setChecked(true);
                     led_textview.setText(R.string.swion);
-                    cmdTxt = "led intensity " + seekBar.getProgress();
+                    cmdTxt = "5 " + seekBar.getProgress();
                     connectedThread.write(cmdTxt);
                 }
             }
@@ -301,14 +305,14 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     fan_switch.setChecked(true);
                     fan_textview.setText(R.string.swion);
-                    cmdTxt = "fan intensity " + seekBar.getProgress();
+                    cmdTxt = "6 " + seekBar.getProgress();
                     connectedThread.write(cmdTxt);
                 }
             }
         });
     }
 
-    /* ============================ Terminate Connection at BackPress ====================== */
+    /* ======================= Terminate Connection at BackPress ====================== */
     @Override
     public void onBackPressed() {
         // Terminate Bluetooth Connection and close app
@@ -322,7 +326,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode,
+                                           @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
         if (requestCode == req) {
             if ((grantResults.length > 0) &&
                     (grantResults[0] +
@@ -342,6 +348,9 @@ public class MainActivity extends AppCompatActivity {
         // Emulator doesn't support Bluetooth and will return null
         if (bluetoothAdapter.isEnabled()) {
             Log.d(TAG, "...Bluetooth ON...");
+            Intent intent = new Intent(MainActivity.this,
+                    SelectDeviceActivity.class);
+            startActivity(intent);
         } else {
             //Prompt user to turn on Bluetooth
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
@@ -349,7 +358,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /* ============================ Thread to Create Bluetooth Connection =================================== */
+    /* ================== Thread to Create Bluetooth Connection ========================== */
     public static class CreateConnectThread extends Thread {
 
 
@@ -365,7 +374,8 @@ public class MainActivity extends AppCompatActivity {
             try {
                 /*
                 Get a BluetoothSocket to connect with the given BluetoothDevice.
-                Due to Android device varieties,the method below may not work fo different devices.
+                Due to Android device varieties,the method below
+                 may not work fo different devices.
                 You should try using other methods i.e. :
                 tmp = device.createRfcommSocketToServiceRecord(MY_UUID);
                  */
@@ -422,7 +432,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /* =============================== Thread for Data Transfer =========================================== */
+    /* =============================== Thread for Data Transfer ===================== */
     public static class ConnectedThread extends Thread {
         private final InputStream mmInStream;
         private final OutputStream mmOutStream;
@@ -447,7 +457,8 @@ public class MainActivity extends AppCompatActivity {
             while (true) {
                 try {
                     /*
-                    Read from the InputStream from Arduino until termination character is reached.
+                    Read from the InputStream from Arduino
+                    until termination character is reached.
                     Then send the whole String message to GUI Handler.
                      */
                     buffer[bytes] = (byte) mmInStream.read();
