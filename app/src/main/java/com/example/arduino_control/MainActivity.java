@@ -200,11 +200,11 @@ public class MainActivity extends AppCompatActivity {
             if (state) {
                 led_switch.setChecked(true);
                 led_textview.setText(R.string.swioff);
-                cmdTxt = "led off";
+                cmdTxt = "led on";
             } else {
                 led_switch.setChecked(false);
                 led_textview.setText(R.string.swion);
-                cmdTxt = "led on";
+                cmdTxt = "led off";
             }
             connectedThread.write(cmdTxt);
         });
@@ -214,11 +214,12 @@ public class MainActivity extends AppCompatActivity {
             if (state) {
                 fan_switch.setChecked(true);
                 fan_textview.setText(R.string.swioff);
-                cmdTxt = "fan off";
+                cmdTxt = "fan on";
+
             } else {
                 fan_switch.setChecked(false);
                 fan_textview.setText(R.string.swion);
-                cmdTxt = "fan on";
+                cmdTxt = "fan off";
             }
             connectedThread.write(cmdTxt);
         });
@@ -243,9 +244,9 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     led_switch.setChecked(true);
                     led_textview.setText(R.string.swion);
-                    cmdTxt = "led intensity" + seekBar.getProgress();
+                    cmdTxt = "led intensity " + seekBar.getProgress();
+                    connectedThread.write(cmdTxt);
                 }
-                connectedThread.write(cmdTxt);
             }
         });
         fan_seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -269,9 +270,9 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     fan_switch.setChecked(true);
                     fan_textview.setText(R.string.swion);
-                    cmdTxt = "fan intensity" + seekBar.getProgress();
+                    cmdTxt = "fan intensity " + seekBar.getProgress();
+                    connectedThread.write(cmdTxt);
                 }
-                connectedThread.write(cmdTxt);
             }
         });
     }
