@@ -4,7 +4,6 @@ import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
-import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -13,7 +12,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.speech.RecognizerIntent;
-import android.speech.SpeechRecognizer;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -32,6 +30,7 @@ import java.util.Locale;
 import java.util.UUID;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -51,7 +50,15 @@ public class MainActivity extends AppCompatActivity {
     public static CreateConnectThread createConnectThread;
     private String deviceName = null;
     public BluetoothAdapter bluetoothAdapter = null;
-    private SpeechRecognizer speechRecognizer;
+    SwitchMaterial led_switch;
+    SwitchMaterial fan_switch;
+    SeekBar led_seekbar;
+    SeekBar fan_seekbar;
+    TextView fan_textview;
+    TextView led_textview;
+    FloatingActionButton floatingActionButton;
+    TextView voiceResults;
+
 
     static final int req = 123;
 
@@ -65,15 +72,15 @@ public class MainActivity extends AppCompatActivity {
         final Button buttonConnect = findViewById(R.id.bluetoothConnect);
         final Toolbar toolbar = findViewById(R.id.toolbar);
         final ProgressBar progressBar = findViewById(R.id.progressBar);
+        led_switch = findViewById(R.id.switch_led);
+        fan_switch = findViewById(R.id.switch_fan);
+        led_seekbar = findViewById(R.id.seekBar_led);
+        fan_seekbar = findViewById(R.id.seekBar_fan);
+        fan_textview = findViewById(R.id.textView_fan);
+        led_textview = findViewById(R.id.textView_led);
+        floatingActionButton = findViewById(R.id.voice_activation);
+        voiceResults = findViewById(R.id.voiceResults);
         progressBar.setVisibility(View.GONE);
-        SwitchMaterial led_switch = findViewById(R.id.switch_led);
-        SwitchMaterial fan_switch = findViewById(R.id.switch_fan);
-        SeekBar led_seekbar = findViewById(R.id.seekBar_led);
-        SeekBar fan_seekbar = findViewById(R.id.seekBar_fan);
-        TextView fan_textview = findViewById(R.id.textView_fan);
-        TextView led_textview = findViewById(R.id.textView_led);
-        FloatingActionButton floatingActionButton = findViewById(R.id.voice_activation);
-        TextView voiceResults = findViewById(R.id.voiceResults);
         fan_seekbar.setEnabled(false);
         fan_switch.setEnabled(false);
         led_switch.setEnabled(false);
@@ -167,25 +174,20 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
-        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this, ComponentName.unflattenFromString("com.google.android.googlequicksearchbox/com.google.android.voicesearch.serviceapi.GoogleRecognitionService"));
-
-
-        final Intent speechRecognizerIntent = new Intent(
-                RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-
-        speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-
-        speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE,
-                Locale.getDefault());
-
-
         //                          voice button
 
 
-        floatingActionButton.setOnClickListener(v ->
-                speechRecognizer.startListening(speechRecognizerIntent));
+        floatingActionButton.setOnClickListener(v -> {
+            Intent speechRecognizerIntent = new Intent(
+                    RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
 
+            speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                    RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+
+            speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE,
+                    Locale.getDefault());
+            startActivityForResult(speechRecognizerIntent, 10);
+        });
 
         /*
         Second most important piece of Code. GUI Handler
@@ -218,7 +220,7 @@ public class MainActivity extends AppCompatActivity {
                             case '1':
                                 led_textview.setText(R.string.swion);
                                 led_switch.setChecked(true);
-                                led_seekbar.setProgress(1);
+                                led_seekbar.setProgress(50);
                                 break;
                             case '2':
                                 led_textview.setText(R.string.swioff);
@@ -228,7 +230,7 @@ public class MainActivity extends AppCompatActivity {
                             case '3':
                                 fan_switch.setChecked(true);
                                 fan_textview.setText(R.string.swion);
-                                fan_seekbar.setProgress(1);
+                                fan_seekbar.setProgress(50);
                                 break;
                             case '4':
                                 fan_switch.setChecked(false);
@@ -270,7 +272,7 @@ public class MainActivity extends AppCompatActivity {
             if (state) {
                 led_switch.setChecked(true);
                 led_textview.setText(R.string.swion);
-                led_seekbar.setProgress(1);
+                led_seekbar.setProgress(50);
                 led_seekbar.setEnabled(true);
                 cmdTxt = "1";
             } else {
@@ -291,7 +293,7 @@ public class MainActivity extends AppCompatActivity {
             if (state) {
                 fan_switch.setChecked(true);
                 fan_textview.setText(R.string.swion);
-                fan_seekbar.setProgress(1);
+                fan_seekbar.setProgress(50);
                 fan_seekbar.setEnabled(true);
                 cmdTxt = "3";
 
@@ -358,6 +360,30 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (resultCode == RESULT_OK && data != null) {
+            String rec = null;
+            for (String val : data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)) {
+                if (val.toLowerCase().contains("led")) {
+                    boolean state = led_switch.isChecked();
+                    rec = val.toUpperCase();
+                    led_switch.setChecked(!state);
+                    break;
+                } else if (val.toLowerCase().contains("fan")) {
+                    boolean state = fan_switch.isChecked();
+                    rec = val.toUpperCase();
+                    fan_switch.setChecked(!state);
+                }
+            }
+            if (rec != null) {
+                voiceResults.setText(rec);
+            }
+        }
     }
 
     /* ======================= Terminate Connection at BackPress ====================== */
