@@ -44,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
 
     private final static int CONNECTING_STATUS = 1;
     private final static int MESSAGE_READ = 2;
+    public static int CONNECTED_STATUS = 0;
     public static Handler handler;
     public static BluetoothSocket mmSocket;
     public static ConnectedThread connectedThread;
@@ -81,11 +82,6 @@ public class MainActivity extends AppCompatActivity {
         floatingActionButton = findViewById(R.id.voice_activation);
         voiceResults = findViewById(R.id.voiceResults);
         progressBar.setVisibility(View.GONE);
-        fan_seekbar.setEnabled(false);
-        fan_switch.setEnabled(false);
-        led_switch.setEnabled(false);
-        led_seekbar.setEnabled(false);
-        floatingActionButton.setEnabled(false);
 
         //                          Checking Permissions
         if (ContextCompat.checkSelfPermission(this,
@@ -161,7 +157,6 @@ public class MainActivity extends AppCompatActivity {
             // Show progress and connection status
             toolbar.setSubtitle("Connecting to " + deviceName + "...");
             progressBar.setVisibility(View.VISIBLE);
-            buttonConnect.setEnabled(false);
 
             /*
             This is the most important piece of code. When "deviceName" is found
@@ -201,15 +196,10 @@ public class MainActivity extends AppCompatActivity {
                             case 1:
                                 toolbar.setSubtitle("Connected to " + deviceName);
                                 progressBar.setVisibility(View.GONE);
-                                buttonConnect.setEnabled(true);
-                                fan_switch.setEnabled(true);
-                                led_switch.setEnabled(true);
-                                floatingActionButton.setEnabled(true);
                                 break;
                             case -1:
                                 toolbar.setSubtitle("Device fails to connect");
                                 progressBar.setVisibility(View.GONE);
-                                buttonConnect.setEnabled(true);
                                 break;
                         }
                         break;
@@ -283,7 +273,8 @@ public class MainActivity extends AppCompatActivity {
 
                 cmdTxt = "2";
             }
-            connectedThread.write(cmdTxt);
+            if (CONNECTED_STATUS == 1)
+                connectedThread.write(cmdTxt);
         });
 
         //                              Fan Switch
@@ -304,7 +295,8 @@ public class MainActivity extends AppCompatActivity {
                 fan_seekbar.setEnabled(false);
                 cmdTxt = "4";
             }
-            connectedThread.write(cmdTxt);
+            if (CONNECTED_STATUS == 1)
+                connectedThread.write(cmdTxt);
         });
 
         //                              Fan Seekbar
@@ -329,7 +321,8 @@ public class MainActivity extends AppCompatActivity {
                     led_switch.setChecked(true);
                     led_textview.setText(R.string.swion);
                     cmdTxt = "5 " + seekBar.getProgress();
-                    connectedThread.write(cmdTxt);
+                    if (CONNECTED_STATUS == 1)
+                        connectedThread.write(cmdTxt);
                 }
             }
         });
@@ -356,7 +349,8 @@ public class MainActivity extends AppCompatActivity {
                     fan_switch.setChecked(true);
                     fan_textview.setText(R.string.swion);
                     cmdTxt = "6 " + seekBar.getProgress();
-                    connectedThread.write(cmdTxt);
+                    if (CONNECTED_STATUS == 1)
+                        connectedThread.write(cmdTxt);
                 }
             }
         });
@@ -378,6 +372,9 @@ public class MainActivity extends AppCompatActivity {
                     boolean state = fan_switch.isChecked();
                     rec = val.toUpperCase();
                     fan_switch.setChecked(!state);
+                } else if (val.toLowerCase().contains("connect")) {
+                    bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+                    checkBTState();
                 }
             }
             if (rec != null) {
@@ -475,6 +472,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("Status", "Trying to connect");
                 mmSocket.connect();
                 Log.d("Status", "Device connected");
+                CONNECTED_STATUS = 1;
                 handler.obtainMessage(CONNECTING_STATUS, 1, -1).sendToTarget();
             } catch (IOException connectException) {
                 // Unable to connect; close the socket and return.
