@@ -365,13 +365,28 @@ public class MainActivity extends AppCompatActivity {
             for (String val : data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)) {
                 if (val.toLowerCase().contains("led")) {
                     boolean state = led_switch.isChecked();
-                    rec = val.toUpperCase();
-                    led_switch.setChecked(!state);
+                    if (state && val.toLowerCase().contains("off")) {
+                        rec = val.toUpperCase();
+                        led_switch.setChecked(!state);
+                    } else if (!state && val.toLowerCase().contains("on")) {
+                        rec = val.toUpperCase();
+                        led_switch.setChecked(!state);
+                    } else {
+                        rec = val.toUpperCase();
+                    }
                     break;
                 } else if (val.toLowerCase().contains("fan")) {
                     boolean state = fan_switch.isChecked();
-                    rec = val.toUpperCase();
-                    fan_switch.setChecked(!state);
+                    if (state && val.toLowerCase().contains("off")) {
+                        rec = val.toUpperCase();
+                        fan_switch.setChecked(!state);
+                    } else if (!state && val.toLowerCase().contains("on")) {
+                        rec = val.toUpperCase();
+                        fan_switch.setChecked(!state);
+                    } else {
+                        rec = val.toUpperCase();
+                    }
+
                 } else if (val.toLowerCase().contains("connect")) {
                     bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
                     checkBTState();
