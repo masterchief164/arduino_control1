@@ -16,10 +16,10 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
-import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.agilie.circularpicker.ui.view.CircularPickerView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
@@ -53,8 +53,8 @@ public class MainActivity extends AppCompatActivity {
     public BluetoothAdapter bluetoothAdapter = null;
     SwitchMaterial led_switch;
     SwitchMaterial fan_switch;
-    SeekBar led_seekbar;
-    SeekBar fan_seekbar;
+    CircularPickerView led_seekbar;
+    CircularPickerView fan_seekbar;
     TextView fan_textview;
     TextView led_textview;
     FloatingActionButton floatingActionButton;
@@ -82,6 +82,13 @@ public class MainActivity extends AppCompatActivity {
         floatingActionButton = findViewById(R.id.voice_activation);
         voiceResults = findViewById(R.id.voiceResults);
         progressBar.setVisibility(View.GONE);
+        led_seekbar.setMaxValue(100);
+        led_seekbar.setMaxLapCount(1);
+        led_seekbar.setCenteredText(0 + "%");
+        fan_seekbar.setMaxValue(100);
+        fan_seekbar.setMaxLapCount(1);
+        fan_seekbar.setCenteredText(0 + "%");
+
 
         //                          Checking Permissions
         if (ContextCompat.checkSelfPermission(this,
@@ -210,35 +217,33 @@ public class MainActivity extends AppCompatActivity {
                             case '1':
                                 led_textview.setText(R.string.swion);
                                 led_switch.setChecked(true);
-                                led_seekbar.setProgress(50);
+                                led_seekbar.setCurrentValue(50);
                                 break;
                             case '2':
                                 led_textview.setText(R.string.swioff);
                                 led_switch.setChecked(false);
-                                led_seekbar.setProgress(0);
+                                led_seekbar.setCurrentValue(0);
                                 break;
                             case '3':
                                 fan_switch.setChecked(true);
                                 fan_textview.setText(R.string.swion);
-                                fan_seekbar.setProgress(50);
+                                fan_seekbar.setCurrentValue(50);
                                 break;
                             case '4':
                                 fan_switch.setChecked(false);
                                 fan_textview.setText(R.string.swioff);
-                                fan_seekbar.setProgress(0);
+                                fan_seekbar.setCurrentValue(0);
                                 break;
                             case '5':
                                 int k = Integer.parseInt(arduinoMsg.substring(2));
                                 led_switch.setChecked(true);
-                                led_seekbar.setEnabled(true);
-                                led_seekbar.setProgress(k);
+                                led_seekbar.setCurrentValue(k);
                                 Log.e(TAG, String.valueOf(k));
                                 break;
                             case '6':
                                 k = Integer.parseInt(arduinoMsg.substring(2));
                                 fan_switch.setChecked(true);
-                                fan_seekbar.setEnabled(true);
-                                fan_seekbar.setProgress(k);
+                                fan_seekbar.setCurrentValue(k);
                                 Log.e(TAG, String.valueOf(k));
                                 break;
                         }
@@ -262,15 +267,12 @@ public class MainActivity extends AppCompatActivity {
             if (state) {
                 led_switch.setChecked(true);
                 led_textview.setText(R.string.swion);
-                led_seekbar.setProgress(50);
-                led_seekbar.setEnabled(true);
+                led_seekbar.setCurrentValue(50);
                 cmdTxt = "1";
             } else {
                 led_switch.setChecked(false);
                 led_textview.setText(R.string.swioff);
-                led_seekbar.setProgress(0);
-                led_seekbar.setEnabled(false);
-
+                led_seekbar.setCurrentValue(0);
                 cmdTxt = "2";
             }
             if (CONNECTED_STATUS == 1)
@@ -284,75 +286,56 @@ public class MainActivity extends AppCompatActivity {
             if (state) {
                 fan_switch.setChecked(true);
                 fan_textview.setText(R.string.swion);
-                fan_seekbar.setProgress(50);
-                fan_seekbar.setEnabled(true);
+                fan_seekbar.setCurrentValue(50);
                 cmdTxt = "3";
 
             } else {
                 fan_switch.setChecked(false);
                 fan_textview.setText(R.string.swioff);
-                fan_seekbar.setProgress(0);
-                fan_seekbar.setEnabled(false);
+                fan_seekbar.setCurrentValue(0);
                 cmdTxt = "4";
             }
             if (CONNECTED_STATUS == 1)
                 connectedThread.write(cmdTxt);
         });
 
-        //                              Fan Seekbar
-        led_seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-                String cmdTxt;
-                if (seekBar.getProgress() == 0) {
-                    led_switch.setChecked(false);
-                    led_textview.setText(R.string.swioff);
-                } else {
-                    led_switch.setChecked(true);
-                    led_textview.setText(R.string.swion);
-                    cmdTxt = "5 " + seekBar.getProgress();
-                    if (CONNECTED_STATUS == 1)
-                        connectedThread.write(cmdTxt);
+        //                              Led SeekBar
+        led_seekbar.setValueChangedListener(i -> {
+            String cmdTxt;
+            if (i == 0) {
+                led_switch.setChecked(false);
+                led_textview.setText(R.string.swioff);
+                led_seekbar.setCenteredText(0 + "%");
+            } else {
+                led_switch.setChecked(true);
+                led_textview.setText(R.string.swion);
+                cmdTxt = "5 " + i;
+                led_seekbar.setCenteredText(i + "%");
+                if (CONNECTED_STATUS == 1) {
+                    connectedThread.write(cmdTxt);
+                    Log.e("Val out", cmdTxt);
                 }
             }
         });
 
-        //                              Led Seekbar
-        fan_seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 
+        //                              Fan SeekBar
+
+        fan_seekbar.setValueChangedListener(i -> {
+            String cmdTxt;
+            if (i == 0) {
+                fan_switch.setChecked(false);
+                fan_textview.setText(R.string.swioff);
+                fan_seekbar.setCenteredText(0 + "%");
+            } else {
+                fan_switch.setChecked(true);
+                fan_textview.setText(R.string.swion);
+                fan_seekbar.setCenteredText(i + "%");
+                cmdTxt = "6 " + i;
+                if (CONNECTED_STATUS == 1)
+                    connectedThread.write(cmdTxt);
             }
 
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-                String cmdTxt;
-                if (seekBar.getProgress() == 0) {
-                    fan_switch.setChecked(false);
-                    fan_textview.setText(R.string.swioff);
-                } else {
-                    fan_switch.setChecked(true);
-                    fan_textview.setText(R.string.swion);
-                    cmdTxt = "6 " + seekBar.getProgress();
-                    if (CONNECTED_STATUS == 1)
-                        connectedThread.write(cmdTxt);
-                }
-            }
         });
     }
 
